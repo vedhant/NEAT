@@ -1,0 +1,16 @@
+{
+  "name": "neat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "neat.js",
+  "scripts": {
+    "dev": "parcel watch ./src/neat.js --no-source-maps",
+    "build": "parcel build ./src/neat.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "parcel-bundler": "^1.12.4"
+  }
+}

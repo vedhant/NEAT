@@ -2,12 +2,12 @@ import ConnectionGene from './connection_gene';
 import { randInt, rand } from './helpers';
 import NodeGene from './node_gene';
 import PARAMETERS from './parameters';
+import FeedForwardNetwork from './feed_forward_network';
 
 export default class Genome {
     constructor() {
         this.connections = [];
         this.nodes = [];
-        this.nodeDepths = [];
         this.fitness = 0;
     }
 
@@ -103,62 +103,32 @@ export default class Genome {
     copy() {
         let newConnections = [];
         let newNodes = [];
-        let newNodeDepths = [];
         for(let i=0; i<this.connections.length; ++i)
             newConnections.push(this.connections[i].copy());
         for(let i=0; i<this.nodes.length; ++i)
             newNodes.push(this.nodes[i].copy());
-        for(let i=0; i<this.nodeDepths.length; ++i)
-            newNodeDepths.push({
-                nodeId: this.nodeDepths[i].nodeId,
-                depth: this.nodeDepths[i].depth
-            });
         
         let newGenome = new Genome();
         newGenome.connections = newConnections;
         newGenome.nodes = newNodes;
-        newGenome.nodeDepths = newNodeDepths;
         newGenome.fitness = this.fitness;
         return newGenome;
     }
 
     addNode(node) {
         this.nodes.push(node);
-        let depth = -1;
-        if(node.type === NodeGene.TYPE.INPUT)
-            depth = 0;
-        this.nodeDepths.push({
-            nodeId: node.id,
-            depth: depth
-        });
     }
 
     addConnection(connection) {
-        let cycleForms = true;
-        let inNode = connection.inNode;
-        let outNode = connection.outNode; 
-
-        let inDepth, outDepth;
-        let outIdx;
-        for(let i=0; i<this.nodeDepths.length; ++i) {
-            if(this.nodeDepths[i].nodeId === inNode) {
-                inDepth = this.nodeDepths[i].depth;
-            }
-            else if(this.nodeDepths[i].nodeId === outNode) {
-                outDepth = this.nodeDepths[i].depth;
-                outIdx = i;
-            }
-        }
-
-        if(inDepth === -1 || outDepth === -1 || inDepth < outDepth)
-            cycleForms = false;
-
-        if(cycleForms)
-            return false;
-        
-        this.nodeDepths[outIdx].depth = Math.max(outDepth === -1 ? (inDepth + 1) : outDepth, 1 + inDepth);
         this.connections.push(connection);
-        return true;
+        let net = new FeedForwardNetwork(this);
+        if(!net.checkCycles()) {
+            return true;
+        }
+        else {
+            this.connections.pop();
+            return false;
+        } 
     }
 };
 

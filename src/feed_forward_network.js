@@ -78,6 +78,38 @@ export default class FeedForwardNetwork {
         return outputs;
     }
 
+    dfs(u) {
+        let idx = this.getNeuronIndex(u);
+        if(!this.visited[idx]) {
+            this.visited[idx] = true;
+            this.inStack[idx] = true;
+
+            for(let i=0; i<this.network[idx].incoming.length; ++i) {
+                let v = this.network[idx].incoming[i];
+                if(!this.visited[this.getNeuronIndex(v)] && this.dfs(v))
+                    return true;
+                else if(this.inStack[this.getNeuronIndex(v)])
+                    return true;
+            }
+        }
+
+        this.inStack[idx] = false;
+        return false;
+    }
+
+    checkCycles() {
+        this.visited = new Array(this.network.length);
+        this.visited.fill(false);
+        this.inStack = new Array(this.network.length);
+        this.inStack.fill(false);
+        for(let i=0; i<this.network.length; ++i) {
+            if(this.dfs(this.network[i].neuron.id))
+                return true;
+        }
+        
+        return false;
+    }
+
     resetValues() {
         for(let i=0; i<this.network.length; ++i) {
             this.network[i].neuron.value = 0;

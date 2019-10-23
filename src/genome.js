@@ -7,6 +7,7 @@ export default class Genome {
     constructor() {
         this.connections = [];
         this.nodes = [];
+        this.nodeDepths = [];
         this.fitness = 0;
     }
 
@@ -48,7 +49,7 @@ export default class Genome {
         return;
         
         let newConnection = new ConnectionGene(reversed ? node2.id : node1.id, reversed ? node1.id : node2.id, weight, true, connectionCounter.getInnovation());
-        this.connections.push(newConnection);
+        this.addConnection(newConnection);
     }
 
     addNodeMutation(nodeCounter, connectionCounter) {
@@ -62,9 +63,9 @@ export default class Genome {
         let inToNew = new ConnectionGene(inNode.id, newNode.id, 1, true, connectionCounter.getInnovation());
         let newToOut = new ConnectionGene(newNode.id, outNode.id, connection.weight, true, connectionCounter.getInnovation());
         
-        this.nodes.push(newNode);
-        this.connections.push(inToNew);
-        this.connections.push(newToOut);
+        this.addNode(newNode);
+        this.addConnection(inToNew);
+        this.addConnection(newToOut);
     }
 
     mutateConnectionWeights() {
@@ -92,19 +93,72 @@ export default class Genome {
         return connection;
     }
 
+    // TODO: use GenesisGenome abstract class
+    randomizeAllWeights() {
+        for(let i=0; i<this.connections.length; ++i) {
+            this.connections[i].weight = rand(-PARAMETERS.RandomWeightRange / 2, PARAMETERS.RandomWeightRange / 2);
+        }
+    }
+
     copy() {
         let newConnections = [];
         let newNodes = [];
+        let newNodeDepths = [];
         for(let i=0; i<this.connections.length; ++i)
             newConnections.push(this.connections[i].copy());
         for(let i=0; i<this.nodes.length; ++i)
             newNodes.push(this.nodes[i].copy());
+        for(let i=0; i<this.nodeDepths.length; ++i)
+            newNodeDepths.push({
+                nodeId: this.nodeDepths[i].nodeId,
+                depth: this.nodeDepths[i].depth
+            });
         
         let newGenome = new Genome();
         newGenome.connections = newConnections;
         newGenome.nodes = newNodes;
+        newGenome.nodeDepths = newNodeDepths;
         newGenome.fitness = this.fitness;
         return newGenome;
+    }
+
+    addNode(node) {
+        this.nodes.push(node);
+        let depth = -1;
+        if(node.type === NodeGene.TYPE.INPUT)
+            depth = 0;
+        this.nodeDepths.push({
+            nodeId: node.id,
+            depth: depth
+        });
+    }
+
+    addConnection(connection) {
+        let cycleForms = true;
+        let inNode = connection.inNode;
+        let outNode = connection.outNode; 
+
+        let inDepth, outDepth;
+        let outIdx;
+        for(let i=0; i<this.nodeDepths.length; ++i) {
+            if(this.nodeDepths[i].nodeId === inNode) {
+                inDepth = this.nodeDepths[i].depth;
+            }
+            else if(this.nodeDepths[i].nodeId === outNode) {
+                outDepth = this.nodeDepths[i].depth;
+                outIdx = i;
+            }
+        }
+
+        if(inDepth === -1 || outDepth === -1 || inDepth < outDepth)
+            cycleForms = false;
+
+        if(cycleForms)
+            return false;
+        
+        this.nodeDepths[outIdx].depth = Math.max(outDepth === -1 ? (inDepth + 1) : outDepth, 1 + inDepth);
+        this.connections.push(connection);
+        return true;
     }
 };
 
@@ -116,11 +170,11 @@ Genome.crossover = function(parent1, parent2) {
         let matchingNode = parent2.getNodeById(parent1.nodes[i].id);
         if(matchingNode !== null) {
             let childNodeGene = Math.random() >= 0.5 ? parent1.nodes[i].copy() : matchingNode.copy();
-            child.nodes.push(childNodeGene);
+            child.addNode(childNodeGene);
         }
         else {
             let childNodeGene = parent1.nodes[i].copy();
-            child.nodes.push(childNodeGene);
+            child.addNode(childNodeGene);
         }
     }
     for(let i=0; i<parent1.connections.length; ++i) {
@@ -128,11 +182,11 @@ Genome.crossover = function(parent1, parent2) {
         let childConnectionGene;
         if(matchingConnection !== null) {
             childConnectionGene = Math.random() >= 0.5 ? parent1.connections[i].copy() : matchingConnection.copy();
-            child.connections.push(childConnectionGene);
+            child.addConnection(childConnectionGene);
         }
         else {
             childConnectionGene = parent1.connections[i].copy();
-            child.connections.push(childConnectionGene);
+            child.addConnection(childConnectionGene);
         }
     }
     return child;

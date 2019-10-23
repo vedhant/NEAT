@@ -10,8 +10,11 @@ export default class Evaluator {
 
         this.populationSize = populationSize;
         this.genomes = [];
-        for(let i=0; i<populationSize; ++i)
-            this.genomes.push(startingGenome.copy());
+        for(let i=0; i<populationSize; ++i) {
+            let initialGenome = startingGenome.copy();
+            initialGenome.randomizeAllWeights();
+            this.genomes.push(initialGenome);
+        }
         this.nextGenGenomes = [];
         this.speciesMap = [];
         this.species = [];

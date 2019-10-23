@@ -1,5 +1,6 @@
 import { randInt } from "./helpers";
 
+// TODO: set compatibility threshold dynamically to make no of species remain constant
 export default class Species {
     constructor(representative) {
         this.representative = representative;

@@ -1,5 +1,5 @@
 import ConnectionGene from './connection_gene';
-import { randInt, rand } from './helpers';
+import { randInt, rand, randGaussian } from './helpers';
 import NodeGene from './node_gene';
 import PARAMETERS from './parameters';
 import FeedForwardNetwork from './feed_forward_network';
@@ -71,7 +71,7 @@ export default class Genome {
     mutateConnectionWeights() {
         for(let i=0; i<this.connections.length; ++i) {
             if(rand(0, 1) < PARAMETERS.probEachWeightUniformPerturb) {
-                this.connections[i].weight *= rand(-PARAMETERS.RandomWeightRange / 2, PARAMETERS.RandomWeightRange / 2);
+                this.connections[i].weight += randGaussian();
             }
             else {
                 this.connections[i].weight = rand(-PARAMETERS.RandomWeightRange / 2, PARAMETERS.RandomWeightRange / 2);
@@ -93,7 +93,7 @@ export default class Genome {
         return connection;
     }
 
-    // TODO: use GenesisGenome abstract class
+    // TODO: use GenesisGenome
     randomizeAllWeights() {
         for(let i=0; i<this.connections.length; ++i) {
             this.connections[i].weight = rand(-PARAMETERS.RandomWeightRange / 2, PARAMETERS.RandomWeightRange / 2);
@@ -152,6 +152,9 @@ Genome.crossover = function(parent1, parent2) {
         let childConnectionGene;
         if(matchingConnection !== null) {
             childConnectionGene = Math.random() >= 0.5 ? parent1.connections[i].copy() : matchingConnection.copy();
+            let disabled = !parent1.connections[i].enabled || !matchingConnection.enabled;
+            if(disabled && Math.random() < PARAMETERS.disableGeneInheritingChance)
+                childConnectionGene.enabled = false;
             child.addConnection(childConnectionGene);
         }
         else {
@@ -165,7 +168,9 @@ Genome.crossover = function(parent1, parent2) {
 Genome.compatibilityDistance = function(genome1, genome2) {
     let N = Math.max(genome1.nodes.length + genome1.connections.length, genome2.nodes.length + genome2.connections.length);
     let compatibilities = Genome.getGenesCompatibility(genome1, genome2);
-    return PARAMETERS.c1 * compatibilities.excess / N + PARAMETERS.c2 * compatibilities.disjoint / N + PARAMETERS.c3 * compatibilities.avgWeightDiff;
+    // TODO: check value of N
+    // N = 1;
+    return (PARAMETERS.c1 * compatibilities.excess / N) + (PARAMETERS.c2 * compatibilities.disjoint / N) + (PARAMETERS.c3 * compatibilities.avgWeightDiff);
 };
 
 Genome.getGenesCompatibility = function(genome1, genome2) {
@@ -233,11 +238,11 @@ Genome.getGenesCompatibility = function(genome1, genome2) {
             }
         }
     }
-
+    let avgWeightDiff = connectionMatching > 0 ? weightDiff / connectionMatching : 0;
     return {
         matching: nodesMatching + connectionMatching,
         disjoint: disjoint,
         excess: excess,
-        avgWeightDiff: weightDiff / connectionMatching
+        avgWeightDiff: avgWeightDiff
     };
 }

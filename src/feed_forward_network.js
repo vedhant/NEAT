@@ -127,7 +127,12 @@ class Neuron {
     }
 
     activateSigmoid() {
-        // this.value = 1 / (1 + Math.exp(-this.value));
+        this.value = 1 / (1 + Math.exp(-this.value));
+        this.activated = true;
+    }
+
+    activateRelu() {
+        this.value = Math.max(this.value, 0);
         this.activated = true;
     }
 };

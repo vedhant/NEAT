@@ -5,17 +5,18 @@ const PARAMETERS = {
     c1: 2,
     c2: 2,
     c3: 0.4,
-    compatibilityThreshold: 3,
-    addConnectionRate: 0.4,
-    addNodeRate: 0.25,
-    cullRate: 0.8,
+    compatibilityThreshold: 1.5,
+    addConnectionRate: 0.05,
+    addNodeRate: 0.03,
+    cullRate: 0.6,
     asexualReproductionRate: 0.25,
     elitismRate: 0.1,
     // TODO: implement mutateToggleEnable
     mutateToggleEnable: 0.3,
     disableGeneInheritingChance: 0.3,
     minSpeciesSize: 1,
-    PopulationSize: 100
+    PopulationSize: 50,
+    survivalThreshold: 0.5
 };
 
 export default PARAMETERS;

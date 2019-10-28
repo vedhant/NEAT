@@ -1,6 +1,7 @@
 import Species from './species';
 import Genome from './genome';
 import PARAMETERS from './parameters';
+import InnovationGenerator from './innovation_generator';
 
 export default class Evaluator {
     constructor(startingGenome, connectionInnovation, nodeInnovation) {
@@ -9,9 +10,11 @@ export default class Evaluator {
         }
 
         this.populationSize = PARAMETERS.PopulationSize;
+        this.genomeIdGenerator = new InnovationGenerator();
         this.genomes = [];
         for(let i=0; i<this.populationSize; ++i) {
             let initialGenome = startingGenome.copy();
+            initialGenome.id = this.genomeIdGenerator.getInnovation();
             initialGenome.randomizeAllWeights();
             this.genomes.push(initialGenome);
         }
@@ -25,31 +28,17 @@ export default class Evaluator {
         this.fittestGenome;
 
         this.generation = 0;
+
+        // Place genomes into species
+        this.species = Species.speciate(this.species, this.genomes);
     }
 
     evaluate() {
         // reset everything for next generation
-        for(let i=0; i<this.species.length; ++i)
-            this.species[i].reset();
         this.nextGenGenomes = [];
         this.fittestGenome = null;
         this.highestScore = 0;
-
-        // Place genomes into species
-        for(let i=0; i<this.genomes.length; ++i) {
-            let speciesFound = false;
-            for(let j=0; j<this.species.length; ++j) {
-                if(Genome.compatibilityDistance(this.genomes[i], this.species[j].representative) < PARAMETERS.compatibilityThreshold) {
-                    this.species[j].members.push(this.genomes[i]);
-                    speciesFound = true;
-                    break;
-                }
-            }
-            if(!speciesFound) {
-                let newSpecies = new Species(this.genomes[i]);
-                this.species.push(newSpecies);
-            }
-        }
+        this.genomeIdGenerator.reset();
 
         // Evaluate genomes and assign fitness
         for(let i=0; i<this.species.length; ++i) {
@@ -85,9 +74,14 @@ export default class Evaluator {
         this.nextGenGenomes = Species.reproduce(this.species, this.nodeInnovation, this.connectionInnovation);
 
         this.genomes = [...this.nextGenGenomes];
+        for(let i=0; i<this.genomes.length; ++i)
+            this.genomes[i].id = this.genomeIdGenerator.getInnovation();
         this.populationSize = this.genomes.length;
 
         ++this.generation;
+
+        // Place genomes into species
+        this.species = Species.speciate(this.species, this.genomes);
     }
 
     evaluateGenome(genome) {

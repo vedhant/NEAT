@@ -15,7 +15,8 @@ export default class Species {
     }
 
     reset() {
-        this.representative = this.members[randInt(0, this.members.length - 1)];
+        this.members.sort((g1, g2) => g1.fitness > g2.fitness ? -1: 1);
+        this.representative = this.members[0];
         this.members.splice(0, this.members.length);
         this.totalAdjustedFitness = 0;
     }
@@ -27,7 +28,6 @@ export default class Species {
             this.members.splice(i, 1);
         }
     }
-
 };
 
 
@@ -52,7 +52,7 @@ Species.reproduce = function(species, nodeInnovation, connectionInnovation) {
         let oldMembers = s.members.map(g => g.copy());
 
         oldMembers.sort((g1, g2) => g1.fitness > g2.fitness ? -1: 1);
-        for(let j=0; j<Math.floor(s.members.length * PARAMETERS.elitismRate); ++j) {
+        for(let j=0; j<Math.ceil(s.members.length * PARAMETERS.elitismRate); ++j) {
             newPopulation.push(s.members[j]);
             --spawn;
         }
@@ -60,7 +60,13 @@ Species.reproduce = function(species, nodeInnovation, connectionInnovation) {
         if(spawn <= 0)
             continue;
 
-        // TODO: implement survival threshold
+        let cutOff = Math.ceil(PARAMETERS.survivalThreshold * oldMembers.length);
+        if(oldMembers.length > 1)
+           cutOff = Math.max(2, cutOff);
+        while(cutOff < oldMembers.length) {
+            oldMembers.pop();
+        }
+
         while(spawn > 0) {
             spawn -= 1;
 
@@ -122,4 +128,29 @@ Species.computeSpawnAmounts = function(previousSize, minSpeciesSize, adjustedFit
     // spawnAmounts = spawnAmounts.map((s, i) => Math.round(norm * s));
 
     return spawnAmounts;
-}
+};
+
+Species.speciate = function(species, genomes) {
+    // Place genomes into species
+    for(let i=0; i<species.length; ++i)
+        species[i].reset();
+        
+    for(let i=0; i<genomes.length; ++i) {
+        let speciesFound = false;
+        for(let j=0; j<species.length; ++j) {
+            if(Genome.compatibilityDistance(genomes[i], species[j].representative) < PARAMETERS.compatibilityThreshold) {
+                species[j].members.push(genomes[i]);
+                speciesFound = true;
+                genomes[i].species = j;
+                break;
+            }
+        }
+        if(!speciesFound) {
+            let newSpecies = new Species(genomes[i]);
+            species.push(newSpecies);
+            genomes[i].species = species.length - 1;
+        }
+    }
+
+    return species;
+};

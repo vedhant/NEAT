@@ -6,6 +6,8 @@ import FeedForwardNetwork from './feed_forward_network';
 
 export default class Genome {
     constructor() {
+        this.id = null;
+        this.species = null;
         this.connections = [];
         this.nodes = [];
         this.fitness = 0;

@@ -5,6 +5,10 @@ export default class InnovationGenerator {
         this.getInnovation = function() {
             ++ currentInnovation;
             return currentInnovation;
-        };  
+        };
+
+        this.reset = function() {
+            currentInnovation = -1;
+        };
     }
 }

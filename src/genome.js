@@ -13,6 +13,24 @@ export default class Genome {
         this.fitness = 0;
     }
 
+    getInitialTopology(inputs, outputs, connectionInnovation, nodeInnovation) {
+        let n = [];
+        for(let i=0; i < (inputs + outputs); ++i)
+            n.push(nodeInnovation.getInnovation());
+        
+        for(let i=0; i < inputs; ++i)
+            this.addNode(new NodeGene(NodeGene.TYPE.INPUT, n[i]));
+        
+        for(let i=0; i < outputs; ++i)
+            this.addNode(new NodeGene(NodeGene.TYPE.OUTPUT, n[i + inputs]));
+        
+        for(let i=0; i<inputs; ++i) {
+            for(let j=0; j<outputs; ++j) {
+                genome.addConnection(new ConnectionGene(n[i], n[inputs + j], 0.5, true, connectionInnovation.getInnovation()));
+            }
+        }
+    }
+
     // TODO: add tries
     addConnectionMutation(connectionCounter) {
         let node1 = this.nodes[randInt(0, this.nodes.length - 1)];

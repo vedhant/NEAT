@@ -15,7 +15,7 @@ function setup() {
     createCanvas(canvasWidth, canvasHeight);
     rectMode(CENTER);
     nextGeneration();
-    fastForward = createSlider(1, 30, 1);
+    fastForward = createSlider(1, 50, 1);
 }
 
 function draw() {
@@ -175,6 +175,7 @@ function nextGeneration() {
 
     pipes.splice(0, pipes.length);
     pipes.push(new Pipe(canvasWidth));
+    console.log(eval.fittestGenome);
 }
 
 let eval = new Test(genome, connectionInnovation, nodeInnovation);
